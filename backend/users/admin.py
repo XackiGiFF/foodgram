@@ -1,5 +1,6 @@
 from django.contrib.admin import ModelAdmin, register
 from django.contrib.auth.admin import UserAdmin
+
 from recipes.admin import EMPTY_VALUE_DISPLAY
 
 from .models import Subscribe, User

@@ -2,6 +2,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
 from recipes.management.reader.file_reader import PRODUCT_MANAGER, FileReader
 
 DATA_ROOT = os.path.join(settings.BASE_DIR, 'data')

@@ -21,6 +21,7 @@ from django.db.models import (CASCADE, CharField, CheckConstraint,
                               PositiveSmallIntegerField, Q, TextField,
                               UniqueConstraint)
 from django.db.models.functions import Length
+
 from recipes.manager.conf import (MAX_AMOUNT_INGREDIENT,
                                   MAX_LEN_RECIPES_CHARFIELD,
                                   MAX_LEN_RECIPES_TEXTFIELD, MAX_VALUE_COOKING,

@@ -2,8 +2,9 @@
 """
 from string import hexdigits
 
-from api.manager.conf import MAX_COLOR_LEN, MIN_COLOR_LEN
 from rest_framework.serializers import ValidationError
+
+from api.manager.conf import MAX_COLOR_LEN, MIN_COLOR_LEN
 
 
 def hex_color_validate(value):

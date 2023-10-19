@@ -3,8 +3,9 @@ import json
 import os
 from string import hexdigits
 
-from recipes.models import Ingredient, Tag
 from rest_framework.serializers import ValidationError
+
+from recipes.models import Ingredient, Tag
 
 TAGS_MANAGER = 'tags'
 

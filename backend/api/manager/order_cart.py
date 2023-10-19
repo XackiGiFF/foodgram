@@ -1,9 +1,10 @@
 from datetime import datetime as dt
 
 from django.db.models import F, Sum
-from recipes.models import AmountIngredient
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
+
+from recipes.models import AmountIngredient
 
 from .conf import DATE_TIME_FORMAT
 

@@ -1,4 +1,5 @@
-from django.contrib.admin import ModelAdmin, TabularInline, register, site, action
+from django.contrib.admin import (ModelAdmin, TabularInline, action, register,
+                                  site)
 from django.utils.safestring import mark_safe
 
 from .models import (AmountIngredient, Favorite, Ingredient, OrderCart, Recipe,
