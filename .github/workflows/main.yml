@@ -120,7 +120,6 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
-          mkdir -p foodgram/
           cd foodgram/
           mv -f infra/* ./
           rm -Rf ./infra/
