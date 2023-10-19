@@ -1,7 +1,6 @@
 """Модуль содержит дополнительные классы
 для настройки основных классов приложения.
 """
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
@@ -72,7 +71,10 @@ class AddDelViewMixin:
             validated_data = serializer.is_valid()
 
             if model == SUBSCRIBE_M2M:
-                result = model.create(user=validated_data['user'], author_id=obj.id)
+                result = model.create(
+                    user=validated_data['user'],
+                    author_id=obj.id
+                )
                 serializer = self.add_serializer(
                     result, context={'request': request}
                 )

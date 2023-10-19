@@ -63,8 +63,8 @@ class UserSerializer(ModelSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.subscribe.filter(author_id=obj.id).exists()
+            request.user.is_authenticated
+            and request.user.subscribe.filter(author_id=obj.id).exists()
         )
 
     def validate_username(self, username):
@@ -127,7 +127,8 @@ class CheckSubscribeSerializer(ModelSerializer):
 
 
 class UserSubscribeSerializer(UserSerializer):
-    """Сериализатор для сохранения авторов на которых подписан текущий пользователь.
+    """Сериализатор для сохранения авторов
+       на которых подписан текущий пользователь.
     """
 
     class Meta(UserSerializer.Meta):
@@ -446,8 +447,8 @@ class RecipeReadSerializer(ModelSerializer):
         """
         user = self.context.get('request').user
         return (
-                user.is_authenticated
-                and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
+            user.is_authenticated
+            and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -463,8 +464,8 @@ class RecipeReadSerializer(ModelSerializer):
         user = self.context.get('request').user
 
         return (
-                user.is_authenticated
-                and user.shoppingcart.filter(user=user.id, recipe=obj.pk).exists()
+            user.is_authenticated
+            and user.shoppingcart.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     class Meta:
