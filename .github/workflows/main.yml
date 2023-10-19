@@ -3,7 +3,7 @@ name: CI/CD for Foodgram
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
 
@@ -119,6 +119,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
+          mkdir -p foodgram/
           cd foodgram/
           mv -f infra/* ./
           rm -Rf ./infra/
