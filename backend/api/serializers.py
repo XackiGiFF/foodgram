@@ -14,7 +14,6 @@ from recipes.models import (AmountIngredient,
                             Recipe,
                             Tag)
 from users.models import Subscribe, User
-
 from .manager.conf import (MAX_LEN_USERS_CHARFIELD,
                            MAX_VALUE_COOKING,
                            MIN_AMOUNT_INGREDIENT,
