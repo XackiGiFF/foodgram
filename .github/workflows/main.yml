@@ -130,6 +130,7 @@ jobs:
           echo POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' >> .env
           echo DB_HOST='${{ secrets.DB_HOST }}' >> .env
           echo DB_PORT=${{ secrets.DB_PORT }} >> .env
+          echo CSRF_TRUSTED_ORIGINS='http://localhost, http://127.0.0.1, ${{ secrets.HOST }}'
 
           # Выполняет pull образов с Docker Hub
           sudo docker compose -f docker-compose.production.yml pull
