@@ -372,10 +372,11 @@ class RecipeSerializer(ModelSerializer):
         Returns:
             Recipe: Созданный рецепт.
         """
+        author = self.context.get('request').user
         image = validated_data.pop('image')
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(image=image, **validated_data)
+        recipe = Recipe.objects.create(image=image, author=author, **validated_data)
         recipe.tags.set(tags)
         self.recipe_amount_ingredients_set(recipe, ingredients)
         return recipe
@@ -498,7 +499,6 @@ class OrderCartViewSerializer(ModelSerializer):
 
 
 class FavoriteSerializer(ModelSerializer):
-    recipes = Recipe.objects.all()
     favorites = Favorite.objects.all()
     user = UserSerializer(
         read_only=True
@@ -512,55 +512,28 @@ class FavoriteSerializer(ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, data):
-        user = self.initial_data.pop('user')
+        user = self.initial_data.get('user')
         recipe = self.initial_data.get('recipe')
 
         if not user.favorites.filter(user=user).exists():
             self.favorites.create(user=user)
 
-        data['user'] = user
-        data['recipe'] = recipe
+        if self.context.get('request').method in ADD_METHODS:
+            if user.favorites.filter(recipe=recipe).exists():
+                raise ValidationError(
+                    'Вы уже добавили этот рецепт в избранное!'
+                )
+
+        if self.context.get('request').method in DEL_METHODS:
+            if not user.favorites.filter(recipe=recipe).exists():
+                raise ValidationError(
+                    'Рецепт не был добавлен в избранное или уже был удален!'
+                )
 
         return data
 
-    def save(self, validated_data):
-        """Добавление рецепта в список
-
-        Args:
-            validated_data (Dict):
-                'user': (User): Переданный объект пользователя
-                'recipe': (Recipe): Переданный объект рецепта
-        """
-        user = validated_data.pop('user')
-        recipe = validated_data.pop('recipe')
-
-        if user.favorites.filter(recipe=recipe).exists():
-            raise ValidationError(
-                'Рецепт уже был добавлен в избранное'
-            )
-
-        favorite = self.favorites.get(user=user)
-
-        favorite.recipe.add(recipe)
-
-    def remove(self, validated_data):
-        """Удаление рецепта из списка
-
-        Args:
-            validated_data (Dict):
-                'user': (User): Переданный объект пользователя
-                'recipe': (Recipe): Переданный объект рецепта
-        """
-        user = validated_data.pop('user')
-        recipe = validated_data.pop('recipe')
-
-        favorite = self.favorites.get(user=user)
-
-        favorite.recipe.remove(recipe)
-
 
 class OrderCartSerializer(ModelSerializer):
-    recipes = Recipe.objects.all()
     shoppingcart = OrderCart.objects.all()
     user = UserSerializer(
         read_only=True
@@ -574,49 +547,22 @@ class OrderCartSerializer(ModelSerializer):
         fields = ('user', 'recipe')
 
     def validate(self, data):
-        user = self.initial_data.pop('user')
+        user = self.initial_data.get('user')
         recipe = self.initial_data.get('recipe')
 
         if not user.shoppingcart.filter(user=user).exists():
             self.shoppingcart.create(user=user)
 
-        data['user'] = user
-        data['recipe'] = recipe
+        if self.context.get('request').method in ADD_METHODS:
+            if user.shoppingcart.filter(recipe=recipe).exists():
+                raise ValidationError(
+                    'Вы уже добавили этот рецепт в корзину!'
+                )
+
+        if self.context.get('request').method in DEL_METHODS:
+            if not user.shoppingcart.filter(recipe=recipe).exists():
+                raise ValidationError(
+                    'Рецепт не был добавлен в корзину или уже был удален!'
+                )
 
         return data
-
-    def save(self, validated_data):
-        """Добавление рецепта в список
-
-        Args:
-            validated_data (Dict):
-                'user': (User): Переданный объект пользователя
-                'recipe': (Recipe): Переданный объект рецепта
-        """
-        user = validated_data.pop('user')
-        recipe = validated_data.pop('recipe')
-
-        if user.shoppingcart.filter(recipe=recipe).exists():
-            # self.remove(data)
-            raise ValidationError(
-                'Рецепт уже был добавлен в список покупок'
-            )
-
-        shoppingcart = self.shoppingcart.get(user=user)
-
-        shoppingcart.recipe.add(recipe)
-
-    def remove(self, validated_data):
-        """Удаление рецепта из списка
-
-        Args:
-            validated_data (Dict):
-                'user': (User): Переданный объект пользователя
-                'recipe': (Recipe): Переданный объект рецепта
-        """
-        user = validated_data.pop('user')
-        recipe = validated_data.pop('recipe')
-
-        shoppingcart = self.shoppingcart.get(user=user)
-
-        shoppingcart.recipe.remove(recipe)

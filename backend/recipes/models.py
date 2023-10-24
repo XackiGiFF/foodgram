@@ -286,16 +286,16 @@ class Favorite(Model):
     Модель приложения, формирующая списки избранного.
     """
     user = ForeignKey(
+        User,
         verbose_name='Владелец списка избранного',
         related_name='favorites',
-        to=User,
         on_delete=CASCADE,
     )
 
     recipe = ManyToManyField(
+        Recipe,
         verbose_name='Список избранных рецептов',
         related_name='favorites',
-        to=Recipe,
     )
 
     class Meta:

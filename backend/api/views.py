@@ -7,23 +7,22 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import Favorite, Ingredient, Recipe, Tag
+from recipes.models import Favorite, Ingredient, Recipe, Tag, OrderCart
 from users.models import Subscribe, User
 
 from .filters import IngredientSearchFilter, RecipeAndCartFilter
 from .manager.conf import ACTION_METHODS, ADD_METHODS, DEL_METHODS
-from .manager.mixins import AddDelViewMixin
 from .manager.order_cart import download_cart
 from .paginators import PageLimitPagination
 from .permissions import AuthorStaffOrReadOnly
-from .serializers import (FavoriteSerializer, FavoriteViewSerializer,
+from .serializers import (FavoriteSerializer,
                           IngredientSerializer, OrderCartSerializer,
                           RecipeReadSerializer, RecipeSerializer,
                           ShortRecipeSerializer, TagSerializer,
                           UserSubscribeSerializer)
 
 
-class UserViewSet(DjoserUserViewSet, AddDelViewMixin):
+class UserViewSet(DjoserUserViewSet):
     """Работает с пользователями.
 
     ViewSet для работы с пользователями - вывод таковых,
@@ -120,39 +119,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     search_fields = ('^name',)
 
 
-class FavoriteViewSet(ModelViewSet, AddDelViewMixin):
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteViewSerializer
-
-    def favorite(self, request, *args, **kwargs):
-        """Добавляет/удалет рецепт в `избранное`.
-
-        Вызов метода через url: */recipe/<int:pk>/favorite/.
-
-        Args:
-            request (Request): Запрос содержащий данные сессии.
-            args (args):
-                Содержит id рецепта, который
-                нужно добавить/удалить из `избранного`.
-
-        Returns:
-            Response: Статус подтверждающий/отклоняющий действие.
-        """
-        recipe_id = self.kwargs['id']
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-
-        serializer = FavoriteSerializer(
-            data={'user': request.user, 'recipe': recipe},
-            context={'request': request})
-        serializer.is_valid()
-        param = {
-            'user': request.user,
-            'recipe': recipe
-        }
-        return self.add_del_obj(request, serializer, param)
-
-
-class RecipeViewSet(ModelViewSet, AddDelViewMixin):
+class RecipeViewSet(ModelViewSet):
     """Работает с рецептами.
 
     Вывод, создание, редактирование, добавление/удаление
@@ -168,9 +135,6 @@ class RecipeViewSet(ModelViewSet, AddDelViewMixin):
     pagination_class = PageLimitPagination
     add_serializer = ShortRecipeSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeReadSerializer
@@ -179,6 +143,51 @@ class RecipeViewSet(ModelViewSet, AddDelViewMixin):
     @action(
         methods=ACTION_METHODS,
         detail=True,
+        url_path='favorite',
+        url_name='favorite',
+    )
+    def favorite(self, request, pk):
+        """Добавляет/удалет рецепт в `избранное`.
+
+        Вызов метода через url: */recipe/<int:pk>/favorite/.
+
+        Args:
+            request (Request): Запрос содержащий данные сессии.
+            args (args):
+                Содержит id рецепта, который
+                нужно добавить/удалить из `избранного`.
+
+        Returns:
+            Response: Статус подтверждающий/отклоняющий действие.
+        """
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
+
+        serializer = FavoriteSerializer(
+            data={'user': request.user, 'recipe': recipe},
+            context={'request': request})
+
+        serializer.is_valid(raise_exception=True)
+
+        favorite = Favorite.objects.get(user=user)
+
+        if request.method in ADD_METHODS:
+            favorite.recipe.add(recipe)
+
+            return Response('Добавлено в избранное',
+                            status=HTTP_201_CREATED)
+
+        if request.method in DEL_METHODS:
+            favorite.recipe.remove(recipe)
+
+            return Response('Удалено из избранного',
+                            status=HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=ACTION_METHODS,
+        detail=True,
+        url_path='shopping_cart',
+        url_name='shopping_cart',
     )
     def shopping_cart(self, request, pk):
         """Добавляет/удалет рецепт в `список покупок`.
@@ -193,27 +202,35 @@ class RecipeViewSet(ModelViewSet, AddDelViewMixin):
         Returns:
             Response: Статус подтверждающий/отклоняющий действие.
         """
-        obj = get_object_or_404(self.queryset, id=pk)
-        recipe = ShortRecipeSerializer(
-            obj,
-            context={'request': request},
-        ).data
+
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
 
         serializer = OrderCartSerializer(
-            obj,
             data={'user': request.user, 'recipe': recipe},
             context={'request': request})
-        serializer.is_valid()
 
-        param = {
-            'user': request.user,
-            'recipe': obj
-        }
-        return self.add_del_obj(request, serializer, param)
+        serializer.is_valid(raise_exception=True)
+
+        cart = OrderCart.objects.get(user=user)
+
+        if request.method in ADD_METHODS:
+            cart.recipe.add(recipe)
+
+            return Response('Добавлено в корзину',
+                            status=HTTP_201_CREATED)
+
+        if request.method in DEL_METHODS:
+            cart.recipe.remove(recipe)
+
+            return Response('Удалено из корзины',
+                            status=HTTP_204_NO_CONTENT)
 
     @action(
         methods=('get',),
         detail=False,
+        url_path='download_shopping_cart',
+        url_name='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
         """Загружает файл *.txt со списком покупок.

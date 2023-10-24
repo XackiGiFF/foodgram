@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (FavoriteViewSet, IngredientViewSet, RecipeViewSet,
+from .views import (IngredientViewSet, RecipeViewSet,
                     TagViewSet, UserViewSet)
 
 app_name = 'api'
@@ -30,9 +30,9 @@ router.register(
 urlpatterns = (
     path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
-    path('recipes/<id>/favorite/',
-         FavoriteViewSet.as_view(
-             {'post': 'favorite', 'delete': 'favorite'}),
-         name='favorite'
-         ),
+    # path('recipes/<id>/favorite/',
+    #      FavoriteViewSet.as_view(
+    #          {'post': 'favorite', 'delete': 'favorite'}),
+    #      name='favorite'
+    #      ),
 )
