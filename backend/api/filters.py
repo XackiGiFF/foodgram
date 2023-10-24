@@ -13,6 +13,10 @@ class RecipeAndCartFilter(FilterSet):
     is_favorited = filters.BooleanFilter(
         method='is_favorited_filter')
 
+    class Meta:
+        model = Recipe
+        fields = ('tags', 'author')
+
     def is_in_shopping_cart_filter(self, queryset, name, value):
         user = self.request.user
         if value and user.is_authenticated:
@@ -24,10 +28,6 @@ class RecipeAndCartFilter(FilterSet):
         if value and user.is_authenticated:
             return queryset.filter(favorites__user=user)
         return queryset
-
-    class Meta:
-        model = Recipe
-        fields = ('tags', 'author')
 
 
 class IngredientSearchFilter(SearchFilter):

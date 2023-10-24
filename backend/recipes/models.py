@@ -203,10 +203,6 @@ class Recipe(Model):
         ),
     )
 
-    def copy(self):
-        self.id = None
-        self.save()
-
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
@@ -221,6 +217,10 @@ class Recipe(Model):
                 name='\n%(app_label)s_%(class)s_name is empty\n',
             ),
         )
+
+    def copy(self):
+        self.id = None
+        self.save()
 
     def __str__(self) -> str:
         return f'{self.name}. Автор: {self.author.username}'

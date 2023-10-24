@@ -427,6 +427,25 @@ class RecipeReadSerializer(ModelSerializer):
 
     is_favorited = SerializerMethodField()
 
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'tags',
+            'author',
+            'is_favorited',
+            'ingredients',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
+        )
+        read_only_fields = (
+            'is_in_shopping_cart_cart',
+            'is_favorited',
+        )
+
     def get_is_favorited(self, obj):
         """Проверка - находится ли рецепт в избранном.
 
@@ -463,25 +482,6 @@ class RecipeReadSerializer(ModelSerializer):
             ).exists()
         )
 
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'is_favorited',
-            'ingredients',
-            'is_in_shopping_cart',
-            'name',
-            'image',
-            'text',
-            'cooking_time',
-        )
-        read_only_fields = (
-            'is_in_shopping_cart_cart',
-            'is_favorited',
-        )
-
 
 class FavoriteViewSerializer(ModelSerializer):
     class Meta:
@@ -506,6 +506,10 @@ class FavoriteSerializer(ModelSerializer):
     recipe = ShortRecipeSerializer(
         read_only=True
     )
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
 
     def validate(self, data):
         user = self.initial_data.pop('user')
@@ -554,10 +558,6 @@ class FavoriteSerializer(ModelSerializer):
 
         favorite.recipe.remove(recipe)
 
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe')
-
 
 class OrderCartSerializer(ModelSerializer):
     recipes = Recipe.objects.all()
@@ -568,6 +568,10 @@ class OrderCartSerializer(ModelSerializer):
     recipe = ShortRecipeSerializer(
         read_only=True
     )
+
+    class Meta:
+        model = OrderCart
+        fields = ('user', 'recipe')
 
     def validate(self, data):
         user = self.initial_data.pop('user')
@@ -616,7 +620,3 @@ class OrderCartSerializer(ModelSerializer):
         shoppingcart = self.shoppingcart.get(user=user)
 
         shoppingcart.recipe.remove(recipe)
-
-    class Meta:
-        model = OrderCart
-        fields = ('user', 'recipe')
