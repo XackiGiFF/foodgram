@@ -74,8 +74,8 @@ class UserSerializer(ModelSerializer):
         request = self.context.get('request')
 
         return (
-                request.user.is_authenticated
-                and request.user.subscriber.filter(author_id=obj.id).exists()
+                request.user.is_authenticated and
+                request.user.subscriber.filter(author_id=obj.id).exists()
         )
 
     def validate_username(self, username):
@@ -236,7 +236,8 @@ class IngredientViewSerializer(ModelSerializer):
     id = ReadOnlyField(source='ingredients.id')
     name = ReadOnlyField(source='ingredients.name')
     measurement_unit = ReadOnlyField(
-         source='ingredients.measurement_unit')
+        source='ingredients.measurement_unit'
+    )
 
     class Meta:
         model = AmountIngredient
@@ -295,7 +296,8 @@ class RecipeSerializer(ModelSerializer):
         AmountIngredient.objects.bulk_create(
             [AmountIngredient(
                 recipe=recipe,
-                ingredients=get_object_or_404(Ingredient, id=ingredient.get('id')),
+                ingredients=get_object_or_404(Ingredient,
+                                              id=ingredient.get('id')),
                 amount=ingredient.get('amount')
             ) for ingredient in ingredients]
         )
@@ -446,8 +448,8 @@ class RecipeReadSerializer(ModelSerializer):
         """
         user = self.context.get('request').user
         return (
-                user.is_authenticated
-                and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
+                user.is_authenticated and
+                user.favorites.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -463,8 +465,9 @@ class RecipeReadSerializer(ModelSerializer):
         user = self.context.get('request').user
 
         return (
-                user.is_authenticated
-                and user.shoppingcart.filter(user=user.id, recipe=obj.pk).exists()
+                user.is_authenticated and
+                user.shoppingcart.filter(user=user.id,
+                                         recipe=obj.pk).exists()
         )
 
     class Meta:
