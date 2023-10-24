@@ -373,10 +373,10 @@ class RecipeSerializer(ModelSerializer):
             Recipe: Созданный рецепт.
         """
         author = self.context.get('request').user
-        image = validated_data.pop('image')
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(image=image, author=author, **validated_data)
+        recipe = Recipe.objects.create(author=author,
+                                       **validated_data)
         recipe.tags.set(tags)
         self.recipe_amount_ingredients_set(recipe, ingredients)
         return recipe
