@@ -8,18 +8,19 @@ from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from recipes.models import Favorite, Ingredient, Recipe, Tag
-from users.models import User, Subscribe
+from users.models import Subscribe, User
+
 from .filters import IngredientSearchFilter, RecipeAndCartFilter
 from .manager.conf import ACTION_METHODS, ADD_METHODS, DEL_METHODS
 from .manager.mixins import AddDelViewMixin
 from .manager.order_cart import download_cart
 from .paginators import PageLimitPagination
 from .permissions import AuthorStaffOrReadOnly
-from .serializers import (FavoriteSerializer,
-                          FavoriteViewSerializer, IngredientSerializer,
-                          OrderCartSerializer, RecipeReadSerializer,
-                          RecipeSerializer, ShortRecipeSerializer,
-                          TagSerializer, UserSubscribeSerializer)
+from .serializers import (FavoriteSerializer, FavoriteViewSerializer,
+                          IngredientSerializer, OrderCartSerializer,
+                          RecipeReadSerializer, RecipeSerializer,
+                          ShortRecipeSerializer, TagSerializer,
+                          UserSubscribeSerializer)
 
 
 class UserViewSet(DjoserUserViewSet, AddDelViewMixin):
