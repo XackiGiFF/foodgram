@@ -16,13 +16,13 @@ class IngredientInline(TabularInline):
 
 @register(AmountIngredient)
 class AmountIngredientAdmin(ModelAdmin):
-    list_display = ('recipe', 'ingredients',)
+    list_display = ('id', 'recipe', 'ingredients',)
 
 
 @register(Ingredient)
 class IngredientAdmin(ModelAdmin):
     list_display = (
-        'name', 'measurement_unit',
+        'id', 'name', 'measurement_unit',
     )
     search_fields = (
         'name',

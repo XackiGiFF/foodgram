@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
@@ -41,7 +42,7 @@ INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
     'users.apps.UsersConfig',
     'django_extensions',
-    'colorfield'
+    'colorfield',
 ]
 
 MIDDLEWARE = [

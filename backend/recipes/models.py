@@ -241,16 +241,16 @@ class AmountIngredient(Model):
             по минимальному и максимальному значениям.
     """
     recipe = ForeignKey(
+        Recipe,
+        on_delete=CASCADE,
         verbose_name='В каких рецептах',
         related_name='amount_ingredients',
-        to=Recipe,
-        on_delete=CASCADE,
     )
     ingredients = ForeignKey(
+        Ingredient,
+        on_delete=CASCADE,
         verbose_name='Связанные ингредиенты',
         related_name='amount_ingredients',
-        to=Ingredient,
-        on_delete=CASCADE,
     )
     amount = PositiveSmallIntegerField(
         verbose_name='Количество',
