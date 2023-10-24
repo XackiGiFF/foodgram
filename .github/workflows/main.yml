@@ -29,8 +29,6 @@ jobs:
         cd backend
         python -m flake8 .
 
-# Okay. Далее надо решать
-
   build_push_backend_to_DockerHub:
     name: Building back image and pushing it to Docker Hub
     runs-on: ubuntu-20.04

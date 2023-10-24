@@ -1,53 +1,40 @@
+import logging
+
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework.decorators import action
-from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.generics import get_object_or_404, ListAPIView
+from rest_framework.response import Response
+from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from recipes.models import Favorite, Ingredient, Recipe, Tag
-from users.models import User
-
+from users.models import User, Subscribe
 from .filters import IngredientSearchFilter, RecipeAndCartFilter
-from .manager.conf import ACTION_METHODS, SUBSCRIBE_M2M
+from .manager.conf import ACTION_METHODS, ADD_METHODS, DEL_METHODS
 from .manager.mixins import AddDelViewMixin
 from .manager.order_cart import download_cart
 from .paginators import PageLimitPagination
 from .permissions import AuthorStaffOrReadOnly
-from .serializers import (CheckSubscribeSerializer, FavoriteSerializer,
+from .serializers import (FavoriteSerializer,
                           FavoriteViewSerializer, IngredientSerializer,
                           OrderCartSerializer, RecipeReadSerializer,
                           RecipeSerializer, ShortRecipeSerializer,
-                          TagSerializer, UserSerializer,
-                          UserSubscribeSerializer, UserSubscribeViewSerializer)
-
-
-class SubscriptionsView(ListAPIView):
-    pagination_class = PageLimitPagination
-    permission_classes = (AuthorStaffOrReadOnly,)
-
-    def get(self, request, *args, **kwargs):
-        queryset = User.objects.filter(subscribe__user=request.user)
-        page = self.paginate_queryset(queryset)
-        serializer = UserSubscribeSerializer(
-            page,
-            context={'request': request},
-            many=True
-        )
-        return self.get_paginated_response(serializer.data)
+                          TagSerializer, UserSubscribeSerializer)
 
 
 class UserViewSet(DjoserUserViewSet, AddDelViewMixin):
     """Работает с пользователями.
 
-    ViewSet для работы с пользователми - вывод таковых,
+    ViewSet для работы с пользователями - вывод таковых,
     регистрация.
     Для авторизованных пользователей —
     возможность подписаться на автора рецепта.
     """
     pagination_class = PageLimitPagination
     permission_classes = (AuthorStaffOrReadOnly,)
-    add_serializer = UserSerializer
+    add_serializer = UserSubscribeSerializer
 
     @action(
         methods=ACTION_METHODS,
@@ -69,15 +56,26 @@ class UserViewSet(DjoserUserViewSet, AddDelViewMixin):
         """
         user = request.user
         author = get_object_or_404(User, pk=id)
-        data = {'user': user.id, 'author': author.id}
 
-        self.add_serializer = UserSubscribeSerializer
-
-        serializer = CheckSubscribeSerializer(
-            data=data, context={'request': request}
+        serializer = self.add_serializer(
+            data={'user': user.id, 'author': author.id},
+            context={'request': request}
         )
+        serializer.is_valid(raise_exception=True)
 
-        return self.add_del_obj(request, id, SUBSCRIBE_M2M, data, serializer)
+        if request.method in ADD_METHODS:
+            result = Subscribe.objects.create(user=user, author=author)
+            serializer = self.add_serializer(
+                result, context={'request': request}
+            )
+
+            return Response(serializer.data, status=HTTP_201_CREATED)
+
+        if request.method in DEL_METHODS:
+            user.subscriber.filter(author=author.id).delete()
+
+            return Response('Подписка успешно удалена',
+                            status=HTTP_204_NO_CONTENT)
 
     @action(
         methods=('get',),
@@ -97,9 +95,9 @@ class UserViewSet(DjoserUserViewSet, AddDelViewMixin):
                 Список подписок для авторизованного пользователя.
         """
         user = self.request.user
-        authors = user.subscribe.all()
+        authors = user.subscriber.all()
         pages = self.paginate_queryset(authors)
-        serializer = UserSubscribeViewSerializer(
+        serializer = self.add_serializer(
             pages, many=True, context={'request': request}
         )
         return self.get_paginated_response(serializer.data)

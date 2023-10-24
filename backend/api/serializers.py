@@ -12,7 +12,7 @@ from users.models import Subscribe, User
 
 from .manager.conf import (MAX_LEN_USERS_CHARFIELD, MAX_VALUE_COOKING,
                            MIN_AMOUNT_INGREDIENT, MIN_USERNAME_LENGTH,
-                           MIN_VALUE_COOKING, RECIPES_LIMIT)
+                           MIN_VALUE_COOKING, RECIPES_LIMIT, ADD_METHODS, DEL_METHODS)
 from .validators import search_duplications
 
 
@@ -34,7 +34,8 @@ class ShortRecipeSerializer(ModelSerializer):
 class UserSerializer(ModelSerializer):
     """Сериализатор для использования с моделью User.
     """
-    is_subscribed = SerializerMethodField()
+
+    is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -44,9 +45,9 @@ class UserSerializer(ModelSerializer):
             'username',
             'first_name',
             'last_name',
-            'password',
-            'is_subscribed',
+            'is_subscribed'
         )
+        read_only_fields = ('is_subscribed',)
 
     def get_is_subscribed(self, obj):
         """Проверка подписки пользователей.
@@ -63,8 +64,8 @@ class UserSerializer(ModelSerializer):
         request = self.context.get('request')
 
         return (
-            request.user.is_authenticated
-            and request.user.subscribe.filter(author_id=obj.id).exists()
+                request.user.is_authenticated
+                and request.user.subscriber.filter(author_id=obj.id).exists()
         )
 
     def validate_username(self, username):
@@ -92,7 +93,10 @@ class UserSerializer(ModelSerializer):
         return username.capitalize()
 
 
-class CheckSubscribeSerializer(ModelSerializer):
+class UserSubscribeSerializer(ModelSerializer):
+    """Сериализатор для проверки подписок
+    """
+
     class Meta:
         model = Subscribe
         fields = ('user', 'author')
@@ -104,7 +108,7 @@ class CheckSubscribeSerializer(ModelSerializer):
             user=user, author=author
         ).exists()
 
-        if self.context.get('request').method == 'POST':
+        if self.context.get('request').method in ADD_METHODS:
             if user == author:
                 raise ValidationError(
                     'Вы не можете подписаться на самого себя нельзя'
@@ -114,7 +118,7 @@ class CheckSubscribeSerializer(ModelSerializer):
                     'Вы уже подписаны на этого автора'
                 )
 
-        if self.context.get('request').method == 'DELETE':
+        if self.context.get('request').method in DEL_METHODS:
             if user == author:
                 raise ValidationError(
                     'Отписаться от самого себя невозможно!'
@@ -125,71 +129,47 @@ class CheckSubscribeSerializer(ModelSerializer):
                 )
         return data
 
+    def to_representation(self, instance):
+        """Метод представления модели"""
 
-class UserSubscribeSerializer(UserSerializer):
-    """Сериализатор для сохранения авторов
-       на которых подписан текущий пользователь.
-    """
-
-    class Meta(UserSerializer.Meta):
-        model = User
-        fields = UserSerializer.Meta.fields
-        read_only_fields = UserSerializer.Meta.fields
-
-    def validate(self, data):
-        request = self.context.get('request')
-        author = self.initial_data.get('author')
-
-        subscribed = request.user.subscribe.filter(author_id=author).exists()
-
-        if request.method == 'POST':
-            if request.user == author:
-                raise ValidationError(
-                    'Подписаться на самого себя нельзя'
-                )
-            if subscribed:
-                raise ValidationError(
-                    'Вы уже подписаны'
-                )
-        return data
-
-    def remove(self, validated_data):
-        """Удаление рецепта из списка
-
-        Args:
-            validated_data (Dict):
-                'user': (User): Переданный объект пользователя
-                'recipe': (Recipe): Переданный объект рецепта
-        """
-        user = validated_data.pop('user')
-        author = validated_data.pop('author')
-
-        user.subscribe.filter(user=user.id, author=author.id).delete()
+        serializer = UserSubscribeViewSerializer(
+            instance.author,
+            context={
+                'request': self.context.get('request')
+            }
+        )
+        return serializer.data
 
 
 class UserSubscribeViewSerializer(UserSerializer):
+    """
+    Сериализатор представления подписок
+    """
     recipes = SerializerMethodField()
     recipes_count = SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
         model = User
-        fields = UserSubscribeSerializer.Meta.fields + (
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
             'recipes',
             'recipes_count',
-        )
-        read_only_fields = UserSubscribeSerializer.Meta.fields + (
-            'recipes',
-            'recipes_count',
+            'is_subscribed'
         )
 
     def get_recipes(self, obj):
+        """ Показывает рецепты у автора в сокращенном виде
+        Args:
+            obj (User): Запрошенный автор
+        """
         request = self.context.get('request')
         recipes_limit = request.query_params.get('recipes_limit')
 
-        queryset = Recipe.objects.filter(author_id=obj.author.id)
+        queryset = obj.recipes.all()
         if recipes_limit:
             try:
-                # Recipe.objects.filter(author_id=obj.author.id)
                 queryset = queryset[:int(recipes_limit)]
             except ValueError:
                 queryset = queryset[:int(RECIPES_LIMIT)]
@@ -199,12 +179,12 @@ class UserSubscribeViewSerializer(UserSerializer):
         """ Показывает общее количество рецептов у каждого автора.
 
         Args:
-            obj (User): Запрошенный пользователь.
+            obj (User): Запрошенный автор
 
         Returns:
             int: Количество рецептов созданных запрошенным пользователем.
         """
-        return Recipe.objects.filter(author=obj.id).count()
+        return obj.recipes.count()
 
 
 class TagSerializer(ModelSerializer):
@@ -447,8 +427,8 @@ class RecipeReadSerializer(ModelSerializer):
         """
         user = self.context.get('request').user
         return (
-            user.is_authenticated
-            and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
+                user.is_authenticated
+                and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -464,8 +444,8 @@ class RecipeReadSerializer(ModelSerializer):
         user = self.context.get('request').user
 
         return (
-            user.is_authenticated
-            and user.shoppingcart.filter(user=user.id, recipe=obj.pk).exists()
+                user.is_authenticated
+                and user.shoppingcart.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     class Meta:
