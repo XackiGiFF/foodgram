@@ -3,16 +3,26 @@ from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.fields import IntegerField, ReadOnlyField
 from rest_framework.relations import PrimaryKeyRelatedField
-from rest_framework.serializers import (ModelSerializer, SerializerMethodField,
+from rest_framework.serializers import (ModelSerializer,
+                                        SerializerMethodField,
                                         ValidationError)
 
-from recipes.models import (AmountIngredient, Favorite, Ingredient, OrderCart,
-                            Recipe, Tag)
+from recipes.models import (AmountIngredient,
+                            Favorite,
+                            Ingredient,
+                            OrderCart,
+                            Recipe,
+                            Tag)
 from users.models import Subscribe, User
 
-from .manager.conf import (MAX_LEN_USERS_CHARFIELD, MAX_VALUE_COOKING,
-                           MIN_AMOUNT_INGREDIENT, MIN_USERNAME_LENGTH,
-                           MIN_VALUE_COOKING, RECIPES_LIMIT, ADD_METHODS, DEL_METHODS)
+from .manager.conf import (MAX_LEN_USERS_CHARFIELD,
+                           MAX_VALUE_COOKING,
+                           MIN_AMOUNT_INGREDIENT,
+                           MIN_USERNAME_LENGTH,
+                           MIN_VALUE_COOKING,
+                           RECIPES_LIMIT,
+                           ADD_METHODS,
+                           DEL_METHODS)
 from .validators import search_duplications
 
 
