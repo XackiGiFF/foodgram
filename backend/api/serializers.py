@@ -74,8 +74,8 @@ class UserSerializer(ModelSerializer):
         request = self.context.get('request')
 
         return (
-            request.user.is_authenticated and
-            request.user.subscriber.filter(author_id=obj.id).exists()
+            request.user.is_authenticated
+            and request.user.subscriber.filter(author_id=obj.id).exists()
         )
 
     def validate_username(self, username):
@@ -448,8 +448,8 @@ class RecipeReadSerializer(ModelSerializer):
         """
         user = self.context.get('request').user
         return (
-            user.is_authenticated and
-            user.favorites.filter(user=user.id, recipe=obj.pk).exists()
+            user.is_authenticated
+            and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -465,8 +465,8 @@ class RecipeReadSerializer(ModelSerializer):
         user = self.context.get('request').user
 
         return (
-            user.is_authenticated and
-            user.shoppingcart.filter(
+            user.is_authenticated
+            and user.shoppingcart.filter(
                 user=user.id,
                 recipe=obj.pk
             ).exists()
