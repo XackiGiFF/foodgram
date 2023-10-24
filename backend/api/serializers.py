@@ -33,7 +33,7 @@ class ShortRecipeSerializer(ModelSerializer):
 
 
 class UserSerializer(ModelSerializer):
-    """Сериализатор для использования с моделью User.
+    """Сериализатор для работы с моделью User.
     """
 
     is_subscribed = SerializerMethodField(read_only=True)
@@ -350,17 +350,14 @@ class RecipeSerializer(ModelSerializer):
 
         for ing in ingredients:
             ing_id = ing.get('id')
-
             self.check_amount(ing.get('amount'))
             if search_duplications(valid_ingredients,
                                    'id', ing_id):
                 raise ValidationError(
                     'Поля не должны повторяться!'
                 )
-
             valid_ingredients.append(ing)
 
-        # data['ingredients'] = valid_ingredients
         return data
 
     def create(self, validated_data):
