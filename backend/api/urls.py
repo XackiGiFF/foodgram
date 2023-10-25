@@ -29,9 +29,4 @@ router.register(
 urlpatterns = (
     path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
-    # path('recipes/<id>/favorite/',
-    #      FavoriteViewSet.as_view(
-    #          {'post': 'favorite', 'delete': 'favorite'}),
-    #      name='favorite'
-    #      ),
 )
