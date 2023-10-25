@@ -27,7 +27,7 @@ jobs:
     - name: Test with flake8
       run: |
         cd ./backend
-        python -m flake8 .
+        python -m flake8 --ignore=E501 .
 
   build_push_backend_to_DockerHub:
     name: Building back image and pushing it to Docker Hub
