@@ -48,15 +48,11 @@ class UserSerializer(ModelSerializer):
             'last_name',
             'is_subscribed'
         )
-        read_only_fields = ('is_subscribed',)
+        read_only_fields = ('is_subscribed',),
     
     def create(self, validated_data):
         """ Создаёт нового пользователя с запрошенными полями.
-        Данный метод создает пользователя с хешем пароля,
-        по скольку используется кастомная модель User от AbstractUser.
-        Здесь мы могли бы не использовать create() метод, и создавать
-        пользователя под "капотом" django, но в таком случае нам пришлось
-        бы полностью удалить модель User и использовать стандартную модель.
+        Данный метод создает пользователя с хешем пароля.
 
         Args:
             validated_data (dict): Полученные проверенные данные.
