@@ -7,6 +7,7 @@ log: admin@mail.ru
 pass: admin
 ```
 
+
 - Create env-file:
 ```
 touch .env
