@@ -49,7 +49,7 @@ class UserSerializer(ModelSerializer):
             'is_subscribed'
         )
         read_only_fields = ('is_subscribed',),
-    
+
     def create(self, validated_data):
         """ Создаёт нового пользователя с запрошенными полями.
         Данный метод создает пользователя с хешем пароля.
