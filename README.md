@@ -72,9 +72,8 @@ sudo docker exec -it foodgram-backend-1 python -Xutf8 backend/manage.py dumpdata
 
 Загрузить дамп базы данных:
 ```bash
+sudo docker cp -Rf backend/data/media/recipe_images/* foodgram-backend-1:backend/media/recipe_images/
 sudo docker exec -it foodgram-backend-1 python backend/manage.py loaddata dump.json
-sudo docker cp -Rf backend/media/recipe_images/* foodgram-backend-1:backend/media/recipe_images/
-sudo \media\recipe_images
 ```
 
 # Команды Terminal:
