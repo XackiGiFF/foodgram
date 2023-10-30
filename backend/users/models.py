@@ -10,10 +10,10 @@ from django.db.models import (CASCADE, CharField, CheckConstraint, EmailField,
                               UniqueConstraint)
 from django.db.models.functions import Length
 
-from .manager.conf import (EMAIL_HELP, FIRST_NAME_HELP, LAST_NAME_HELP,
-                           MAX_LEN_EMAIL_FIELD, MAX_LEN_USERS_CHARFIELD,
-                           MIN_USERNAME_LENGTH, USER_NAME_HELP)
-from .validators import MinLenValidator, OneOfTwoValidator
+from users.manager.conf import (EMAIL_HELP, FIRST_NAME_HELP, LAST_NAME_HELP,
+                                MAX_LEN_EMAIL_FIELD, MAX_LEN_USERS_CHARFIELD,
+                                MIN_USERNAME_LENGTH, USER_NAME_HELP)
+from users.validators import MinLenValidator, OneOfTwoValidator
 
 CharField.register_lookup(Length)
 

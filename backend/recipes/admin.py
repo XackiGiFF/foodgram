@@ -2,8 +2,8 @@ from django.contrib.admin import (ModelAdmin, TabularInline, action, register,
                                   site)
 from django.utils.safestring import mark_safe
 
-from .models import (AmountIngredient, Favorite, Ingredient, OrderCart, Recipe,
-                     Tag)
+from recipes.models import (AmountIngredient, Favorite, Ingredient, OrderCart,
+                            Recipe, Tag)
 
 site.site_header = 'Администрирование Foodgram'
 EMPTY_VALUE_DISPLAY = 'Значение не указано'
@@ -94,24 +94,12 @@ class TagAdmin(ModelAdmin):
 @register(OrderCart)
 class OrderCartAdmin(ModelAdmin):
     list_fields = (
-        'id', 'user', 'recipe'
-    )
-    search_fields = (
         'user', 'recipe'
     )
-
-    save_on_top = True
-    empty_value_display = EMPTY_VALUE_DISPLAY
 
 
 @register(Favorite)
 class FavoriteAdmin(ModelAdmin):
     list_fields = (
-        'id', 'user', 'recipe',
-    )
-    search_fields = (
         'user', 'recipe',
     )
-
-    save_on_top = True
-    empty_value_display = EMPTY_VALUE_DISPLAY

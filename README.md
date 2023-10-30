@@ -65,7 +65,19 @@ sudo docker exec -it foodgram-backend-1 python manage.py load_tags
 sudo docker exec -it foodgram-backend-1 python manage.py createsuperuser
 ```
 
-# Команды:
+Снять дамп базы данных:
+```bash
+sudo docker exec -it foodgram-backend-1 python -Xutf8 backend/manage.py dumpdata -o dump.json
+```
+
+Загрузить дамп базы данных:
+```bash
+sudo docker exec -it foodgram-backend-1 python backend/manage.py loaddata dump.json
+sudo docker cp -Rf backend/media/recipe_images/* foodgram-backend-1:backend/media/recipe_images/
+sudo \media\recipe_images
+```
+
+# Команды Terminal:
 
 Makemigrations:
 ```bash
@@ -84,12 +96,12 @@ python backend/manage.py collectstatic --noinput
 
 Create Superuser:
 ```bash
-python backend/manage.py createsuperuser
+python backend/manage.pymanage.py createsuperuser
 ```
 
 Run server:
 ```bash
-python backend/manage.py runserver 0.0.0.0:8000
+python backend\manage.py runserver 0.0.0.0:8000
 ```
 
 Make dump:
@@ -101,4 +113,3 @@ Restore dump:
 ```bash
 python backend/manage.py loaddata dump.json
 ```
-

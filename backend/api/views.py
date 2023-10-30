@@ -7,18 +7,17 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import Favorite, Ingredient, OrderCart, Recipe, Tag
-from users.models import Subscribe, User
-
-from .filters import IngredientSearchFilter, RecipeAndCartFilter
-from .manager.conf import ACTION_METHODS, ADD_METHODS, DEL_METHODS
-from .manager.order_cart import download_cart
-from .paginators import PageLimitPagination
-from .permissions import AuthorStaffOrReadOnly
-from .serializers import (FavoriteSerializer, IngredientSerializer,
-                          OrderCartSerializer, RecipeReadSerializer,
-                          RecipeSerializer, ShortRecipeSerializer,
-                          TagSerializer, UserSubscribeSerializer)
+from api.filters import IngredientSearchFilter, RecipeAndCartFilter
+from api.manager.conf import ACTION_METHODS, ADD_METHODS, DEL_METHODS
+from api.manager.order_cart import download_cart
+from api.paginators import PageLimitPagination
+from api.permissions import AuthorStaffOrReadOnly
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             OrderCartSerializer, RecipeReadSerializer,
+                             RecipeSerializer, ShortRecipeSerializer,
+                             TagSerializer, UserSubscribeSerializer)
+from recipes.models import Ingredient, Recipe, Tag
+from users.models import User
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -61,7 +60,8 @@ class UserViewSet(DjoserUserViewSet):
         serializer.is_valid(raise_exception=True)
 
         if request.method in ADD_METHODS:
-            result = Subscribe.objects.create(user=user, author=author)
+            result = serializer.save()
+
             serializer = self.add_serializer(
                 result, context={'request': request}
             )
@@ -69,7 +69,7 @@ class UserViewSet(DjoserUserViewSet):
             return Response(serializer.data, status=HTTP_201_CREATED)
 
         if request.method in DEL_METHODS:
-            user.subscriber.filter(author=author.id).delete()
+            user.subscriber.filter(author_id=author.id).delete()
 
             return Response('Подписка успешно удалена',
                             status=HTTP_204_NO_CONTENT)
@@ -163,21 +163,19 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, id=pk)
 
         serializer = FavoriteSerializer(
-            data={'user': request.user, 'recipe': recipe},
+            data={'user': request.user.id, 'recipe': recipe.id},
             context={'request': request})
 
         serializer.is_valid(raise_exception=True)
 
-        favorite = Favorite.objects.get(user=user)
-
         if request.method in ADD_METHODS:
-            favorite.recipe.add(recipe)
+            serializer.save()
 
-            return Response('Добавлено в избранное',
+            return Response(serializer.data,
                             status=HTTP_201_CREATED)
 
         if request.method in DEL_METHODS:
-            favorite.recipe.remove(recipe)
+            user.favorites.filter(recipe_id=recipe.id).delete()
 
             return Response('Удалено из избранного',
                             status=HTTP_204_NO_CONTENT)
@@ -206,21 +204,19 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, id=pk)
 
         serializer = OrderCartSerializer(
-            data={'user': request.user, 'recipe': recipe},
+            data={'user': request.user.id, 'recipe': recipe.id},
             context={'request': request})
 
         serializer.is_valid(raise_exception=True)
 
-        cart = OrderCart.objects.get(user=user)
-
         if request.method in ADD_METHODS:
-            cart.recipe.add(recipe)
+            serializer.save()
 
-            return Response('Добавлено в корзину',
+            return Response(serializer.data,
                             status=HTTP_201_CREATED)
 
         if request.method in DEL_METHODS:
-            cart.recipe.remove(recipe)
+            user.shoppingcart.filter(recipe_id=recipe.id).delete()
 
             return Response('Удалено из корзины',
                             status=HTTP_204_NO_CONTENT)

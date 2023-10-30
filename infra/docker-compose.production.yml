@@ -12,12 +12,12 @@ services:
       - ./.env
 
   frontend:
-    image: xackigiff/foodgram_frontend:latest
+    image: dimokee/foodgram_frontend:latest
     volumes:
       - ./frontend/:/app/result_build/
 
   backend:
-    image: xackigiff/foodgram_backend:latest
+    image: dimokee/foodgram_backend:latest
     restart: always
     command: >
       bash -c "python manage.py makemigrations &&

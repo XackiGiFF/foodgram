@@ -6,15 +6,14 @@ from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import (ModelSerializer, SerializerMethodField,
                                         ValidationError)
 
+from api.manager.conf import (ADD_METHODS, DEL_METHODS,
+                              MAX_LEN_USERS_CHARFIELD, MAX_VALUE_COOKING,
+                              MIN_AMOUNT_INGREDIENT, MIN_USERNAME_LENGTH,
+                              MIN_VALUE_COOKING, RECIPES_LIMIT)
+from api.validators import search_duplications
 from recipes.models import (AmountIngredient, Favorite, Ingredient, OrderCart,
                             Recipe, Tag)
 from users.models import Subscribe, User
-
-from .manager.conf import (ADD_METHODS, DEL_METHODS, MAX_LEN_USERS_CHARFIELD,
-                           MAX_VALUE_COOKING, MIN_AMOUNT_INGREDIENT,
-                           MIN_USERNAME_LENGTH, MIN_VALUE_COOKING,
-                           RECIPES_LIMIT)
-from .validators import search_duplications
 
 
 class ShortRecipeSerializer(ModelSerializer):
@@ -142,10 +141,6 @@ class UserSubscribeSerializer(ModelSerializer):
                 )
 
         if self.context.get('request').method in DEL_METHODS:
-            if user == author:
-                raise ValidationError(
-                    'Отписаться от самого себя невозможно!'
-                )
             if not subscribed:
                 raise ValidationError(
                     'Вы уже отписались от этого автора'
@@ -155,7 +150,7 @@ class UserSubscribeSerializer(ModelSerializer):
     def to_representation(self, instance):
         """Метод представления модели"""
 
-        serializer = UserSubscribeViewSerializer(
+        serializer = UserViewSerializer(
             instance.author,
             context={
                 'request': self.context.get('request')
@@ -164,7 +159,7 @@ class UserSubscribeSerializer(ModelSerializer):
         return serializer.data
 
 
-class UserSubscribeViewSerializer(UserSerializer):
+class UserViewSerializer(UserSerializer):
     """
     Сериализатор представления подписок
     """
@@ -173,13 +168,9 @@ class UserSubscribeViewSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         model = User
-        fields = (
-            'id',
-            'first_name',
-            'last_name',
+        fields = UserSerializer.Meta.fields + (
             'recipes',
             'recipes_count',
-            'is_subscribed'
         )
 
     def get_recipes(self, obj):
@@ -223,6 +214,7 @@ class TagSerializer(ModelSerializer):
 class IngredientSerializer(ModelSerializer):
     """Сериализатор для вывода ингридиентов.
     """
+
     class Meta:
         model = Ingredient
         fields = '__all__'
@@ -321,8 +313,6 @@ class RecipeSerializer(ModelSerializer):
                 raise ValidationError(
                     'Число должно быть положительным'
                 )
-            else:
-                return int(amount)
         except ValueError:
             raise ValidationError(
                 'Поле должно быть только числом!'
@@ -334,8 +324,6 @@ class RecipeSerializer(ModelSerializer):
                 raise ValidationError(
                     'Время: Число должно быть положительным!'
                 )
-            else:
-                return int(time)
         except ValueError:
             raise ValidationError(
                 'Время: Поле должно быть только числом!'
@@ -382,7 +370,6 @@ class RecipeSerializer(ModelSerializer):
 
             valid_ingredients.append(ing)
 
-        # data['ingredients'] = valid_ingredients
         return data
 
     def create(self, validated_data):
@@ -395,9 +382,10 @@ class RecipeSerializer(ModelSerializer):
             Recipe: Созданный рецепт.
         """
         author = self.context.get('request').user
+        image = validated_data.pop('image')
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(author=author,
+        recipe = Recipe.objects.create(image=image, author=author,
                                        **validated_data)
         recipe.tags.set(tags)
         self.recipe_amount_ingredients_set(recipe, ingredients)
@@ -482,7 +470,8 @@ class RecipeReadSerializer(ModelSerializer):
         user = self.context.get('request').user
         return (
             user.is_authenticated
-            and user.favorites.filter(user=user.id, recipe=obj.pk).exists()
+            and user.favorites.filter(user_id=user.id,
+                                      recipe__id=obj.pk).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -500,91 +489,80 @@ class RecipeReadSerializer(ModelSerializer):
         return (
             user.is_authenticated
             and user.shoppingcart.filter(
-                user=user.id,
-                recipe=obj.pk
-            ).exists()
+                user_id=user.id,
+                recipe_id=obj.pk).exists()
         )
 
 
-class FavoriteViewSerializer(ModelSerializer):
-    class Meta:
-        model = Favorite
-        fields = '__all__',
-        read_only_fields = '__all__',
-
-
-class OrderCartViewSerializer(ModelSerializer):
-    class Meta:
-        model = OrderCart
-        fields = '__all__',
-        read_only_fields = '__all__',
-
-
 class FavoriteSerializer(ModelSerializer):
-    favorites = Favorite.objects.all()
-    user = UserSerializer(
-        read_only=True
-    )
-    recipe = ShortRecipeSerializer(
-        read_only=True
-    )
-
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
 
     def validate(self, data):
-        user = self.initial_data.get('user')
-        recipe = self.initial_data.get('recipe')
-
-        if not user.favorites.filter(user=user).exists():
-            self.favorites.create(user=user)
+        user_id = self.initial_data.get('user')
+        recipe_id = self.initial_data.get('recipe')
 
         if self.context.get('request').method in ADD_METHODS:
-            if user.favorites.filter(recipe=recipe).exists():
+            if Favorite.objects.filter(user_id=user_id,
+                                       recipe_id=recipe_id).exists():
                 raise ValidationError(
                     'Вы уже добавили этот рецепт в избранное!'
                 )
 
         if self.context.get('request').method in DEL_METHODS:
-            if not user.favorites.filter(recipe=recipe).exists():
+            if not Favorite.objects.filter(user_id=user_id,
+                                           recipe_id=recipe_id).exists():
                 raise ValidationError(
                     'Рецепт не был добавлен в избранное или уже был удален!'
                 )
 
         return data
 
+    def to_representation(self, instance):
+        """Метод представления модели"""
+
+        serializer = ShortRecipeSerializer(
+            instance.recipe,
+            context={
+                'request': self.context.get('request')
+            }
+        )
+        return serializer.data
+
 
 class OrderCartSerializer(ModelSerializer):
-    shoppingcart = OrderCart.objects.all()
-    user = UserSerializer(
-        read_only=True
-    )
-    recipe = ShortRecipeSerializer(
-        read_only=True
-    )
-
     class Meta:
         model = OrderCart
         fields = ('user', 'recipe')
 
     def validate(self, data):
-        user = self.initial_data.get('user')
-        recipe = self.initial_data.get('recipe')
-
-        if not user.shoppingcart.filter(user=user).exists():
-            self.shoppingcart.create(user=user)
+        user_id = self.initial_data.get('user')
+        recipe_id = self.initial_data.get('recipe')
 
         if self.context.get('request').method in ADD_METHODS:
-            if user.shoppingcart.filter(recipe=recipe).exists():
+            if OrderCart.objects.filter(user_id=user_id,
+                                        recipe_id=recipe_id).exists():
                 raise ValidationError(
                     'Вы уже добавили этот рецепт в корзину!'
                 )
 
         if self.context.get('request').method in DEL_METHODS:
-            if not user.shoppingcart.filter(recipe=recipe).exists():
+            if not OrderCart.objects.filter(user_id=user_id,
+                                            recipe_id=recipe_id).exists():
                 raise ValidationError(
                     'Рецепт не был добавлен в корзину или уже был удален!'
                 )
 
         return data
+
+    def to_representation(self, instance):
+        """Метод представления модели"""
+
+        serializer = ShortRecipeSerializer(
+            instance.recipe,
+            context={
+                'request': self.context.get('request')
+            }
+        )
+        return serializer.data

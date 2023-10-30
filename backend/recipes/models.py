@@ -160,20 +160,20 @@ class Recipe(Model):
         max_length=MAX_LEN_RECIPES_CHARFIELD,
     )
     author = ForeignKey(
+        User,
         verbose_name='Автор рецепта',
         related_name='recipes',
-        to=User,
         on_delete=CASCADE,
     )
     tags = ManyToManyField(
+        Tag,
         verbose_name='Тег',
         related_name='recipes',
-        to='Tag',
     )
     ingredients = ManyToManyField(
+        Ingredient,
         verbose_name='Ингредиенты блюда',
         related_name='recipes',
-        to=Ingredient,
         through='recipes.AmountIngredient',
     )
     pub_date = DateTimeField(
@@ -292,10 +292,11 @@ class Favorite(Model):
         on_delete=CASCADE,
     )
 
-    recipe = ManyToManyField(
+    recipe = ForeignKey(
         Recipe,
         verbose_name='Список избранных рецептов',
         related_name='favorites',
+        on_delete=CASCADE,
     )
 
     class Meta:
@@ -305,7 +306,7 @@ class Favorite(Model):
         ordering = ('-id',)
         constraints = [
             UniqueConstraint(
-                fields=('user',),
+                fields=('user', 'recipe'),
                 name='recipes_favorites_unique',
             )
         ]
@@ -320,16 +321,17 @@ class OrderCart(Model):
     Модель приложения, формирующая корзину.
     """
     user = ForeignKey(
+        User,
         verbose_name='Автор рецепта',
         related_name='shoppingcart',
-        to=User,
         on_delete=CASCADE,
     )
 
-    recipe = ManyToManyField(
+    recipe = ForeignKey(
+        Recipe,
         verbose_name='Список покупок',
         related_name='shoppingcart',
-        to=Recipe,
+        on_delete=CASCADE,
     )
 
     class Meta:
@@ -339,7 +341,7 @@ class OrderCart(Model):
         ordering = ('-id',)
         constraints = [
             UniqueConstraint(
-                fields=('user',),
+                fields=('user', 'recipe'),
                 name='recipes_shoppingcart_unique',
             )
         ]

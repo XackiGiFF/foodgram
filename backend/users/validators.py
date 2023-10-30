@@ -3,7 +3,7 @@ from re import compile
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 
-from .manager.conf import MIN_USERNAME_LENGTH
+from users.manager.conf import MIN_USERNAME_LENGTH
 
 
 @deconstructible
