@@ -2,7 +2,7 @@
 
 # Demo
 ```
-http://84.252.136.204
+http://185.93.108.252
 log: admin@mail.ru
 pass: admin
 ```
